@@ -67,7 +67,7 @@ class MainActivity : ComponentActivity() {
                         }
 
                         Button(onClick = {
-                            val countDownTimer = object : CountDownTimer(3600L, 1L) {
+                            val countDownTimer = object : CountDownTimer(30000, 1000) {
                                 override fun onTick(millisUntilFinished: Long) {
                                     val worker =
                                         OneTimeWorkRequestBuilder<NotificationSilentWorker>()

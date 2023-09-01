@@ -7,6 +7,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.drawable.Icon
 import android.os.Build
 import android.widget.RemoteViews
 import android.widget.RemoteViews.RemoteView
@@ -43,11 +44,18 @@ class Notification {
             )
             val remoteView = RemoteViews(context.packageName, R.layout.custom_layout_notification)
             remoteView.setTextViewText(R.id.timerMessage, message)
+            remoteView.setImageViewIcon(
+                R.id.notiIcon,
+                Icon.createWithResource(context, R.drawable.ic_launcher_background)
+            )
+            remoteView.setTextViewText(R.id.pauseCountDown, "pause")
+            remoteView.setTextViewText(R.id.retryCountDown, "retry")
             return NotificationCompat.Builder(context, CHANNEL_ID)
-                .setColor(ContextCompat.getColor(context, R.color.purple_200))
-                .setContentIntent(notifyPendingIntent)
-                .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+                .setCustomBigContentView(remoteView)
                 .setOnlyAlertOnce(true)
+                .setSilent(true)
+                .setSmallIcon(R.drawable.ic_launcher_background)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .build()
         }
