@@ -1,3 +1,5 @@
+@file:Suppress("UtilityClassWithPublicConstructor")
+
 package com.deep.drive.workermanager.notification
 
 import android.annotation.SuppressLint
@@ -10,16 +12,17 @@ import android.content.Intent
 import android.graphics.drawable.Icon
 import android.os.Build
 import android.widget.RemoteViews
-import android.widget.RemoteViews.RemoteView
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.deep.drive.workermanager.MainActivity
 import com.deep.drive.workermanager.R
 
 class Notification {
     companion object {
-        private const val NOTIFICATION_ID = 1000
+        const val NOTIFICATION_ID = 1000
         private const val CHANNEL_ID = "ShowLoading"
+        private const val CHANNEL_NAME = "LOADING"
         const val KEY_MESSAGE = "message"
 
         fun createNotification(context: Context, message: String?): Notification {
@@ -38,22 +41,30 @@ class Notification {
                 .build()
         }
 
-        fun createSilentNotification(context: Context, message: String?): Notification {
+        fun createSilentNotification(
+            context: Context,
+            message: String?
+        ): Notification {
             val notifyPendingIntent = PendingIntent.getActivity(
-                context, 0, Intent(), PendingIntent.FLAG_UPDATE_CURRENT
+                context,
+                0,
+                Intent(context, MainActivity::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT
             )
-            val remoteView = RemoteViews(context.packageName, R.layout.custom_layout_notification)
-            remoteView.setTextViewText(R.id.timerMessage, message)
-            remoteView.setImageViewIcon(
-                R.id.notiIcon,
+            val bigContentNotification =
+                RemoteViews(context.packageName, R.layout.custom_layout_notification)
+            bigContentNotification.setTextViewText(R.id.timerMessage, message)
+            bigContentNotification.setImageViewIcon(
+                R.id.notificationIcon,
                 Icon.createWithResource(context, R.drawable.ic_launcher_background)
             )
-            remoteView.setTextViewText(R.id.pauseCountDown, "pause")
-            remoteView.setTextViewText(R.id.retryCountDown, "retry")
+            bigContentNotification.setTextViewText(R.id.pauseCountDown, "pause")
+            bigContentNotification.setTextViewText(R.id.retryCountDown, "retry")
             return NotificationCompat.Builder(context, CHANNEL_ID)
-                .setCustomBigContentView(remoteView)
+                .setCustomBigContentView(bigContentNotification)
                 .setOnlyAlertOnce(true)
                 .setSilent(true)
+                .setContentIntent(notifyPendingIntent)
                 .setSmallIcon(R.drawable.ic_launcher_background)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -71,7 +82,7 @@ class Notification {
                     val channel =
                         NotificationChannel(
                             CHANNEL_ID,
-                            "Loading",
+                            CHANNEL_NAME,
                             NotificationManager.IMPORTANCE_HIGH
                         )
                     createNotificationChannel(channel)
