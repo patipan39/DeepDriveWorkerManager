@@ -1,9 +1,9 @@
 package com.deep.drive.workermanager
 
 import android.os.Bundle
-import android.os.CountDownTimer
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
@@ -11,25 +11,35 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.work.Constraints
 import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequest
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequest
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import androidx.work.WorkQuery
 import com.deep.drive.workermanager.notification.Notification
 import com.deep.drive.workermanager.ui.theme.DeepDriveWorkerManagerTheme
 import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
+    private var data: ProgressData by mutableStateOf(ProgressData(0))
+
+    override
+    fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        initViewModel()
         setContent {
             DeepDriveWorkerManagerTheme {
                 // A surface container using the 'background' color from the theme
@@ -38,7 +48,8 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
                         Button(onClick = {
                             val worker =
@@ -55,7 +66,7 @@ class MainActivity : ComponentActivity() {
                             val worker = PeriodicWorkRequestBuilder<NotificationMessageWorker>(
                                 15,
                                 TimeUnit.MINUTES
-                            ).buildWithConstraint("15 นาทีแล้ว !!!!").build()
+                            ).buildWithConstraint("เริ่ม นับถอยหลัง 15 นาที").build()
                             WorkManager.getInstance(applicationContext)
                                 .enqueueUniquePeriodicWork(
                                     "PeriodicWork",
@@ -66,33 +77,37 @@ class MainActivity : ComponentActivity() {
                             Text(text = "PeriodicWork")
                         }
 
-                        Button(onClick = {
-                            val countDownTimer = object : CountDownTimer(30000, 1000) {
-                                override fun onTick(millisUntilFinished: Long) {
-                                    val worker =
-                                        OneTimeWorkRequestBuilder<NotificationSilentWorker>()
-                                            .buildWithConstraint(millisUntilFinished.toString())
-                                            .build()
-                                    WorkManager.getInstance(applicationContext)
-                                        .enqueue(worker)
-                                }
-
-                                override fun onFinish() {
-                                    val worker =
-                                        OneTimeWorkRequestBuilder<NotificationSilentWorker>()
-                                            .buildWithConstraint("หมดเวลา !!!!!").build()
-                                    WorkManager.getInstance(applicationContext)
-                                        .enqueue(worker)
-                                }
-                            }
-                            countDownTimer.start()
-                        }) {
-                            Text(text = "Show Clock")
-                        }
+                        ShowProgressButton(data.progress)
                     }
                 }
             }
         }
+    }
+
+    @Composable
+    fun ShowProgressButton(progress: Int) {
+        Button(onClick = {
+            val worker = OneTimeWorkRequestBuilder<NotificationSilentWorker>()
+                .buildWithConstraint("อัพเดทแล้วนะ")
+                .build()
+            WorkManager.getInstance(applicationContext)
+                .enqueueUniqueWork(
+                    "ShowClock",
+                    ExistingWorkPolicy.REPLACE,
+                    worker
+                )
+        }) {
+            Text(text = "$progress")
+        }
+    }
+
+    private fun initViewModel() {
+        WorkManager.getInstance(applicationContext)
+            .getWorkInfosLiveData(WorkQuery.fromUniqueWorkNames("ShowClock")).observe(this) {
+                val workerProgress =
+                    it.firstOrNull()?.progress?.getInt(NotificationSilentWorker.PROGRESS_ARG, 0)
+                data = ProgressData(workerProgress ?: 0)
+            }
     }
 
     private fun PeriodicWorkRequest.Builder.buildWithConstraint(message: String): PeriodicWorkRequest.Builder {
@@ -119,6 +134,8 @@ class MainActivity : ComponentActivity() {
         return this
     }
 }
+
+class ProgressData(val progress: Int)
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
