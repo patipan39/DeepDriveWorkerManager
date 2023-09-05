@@ -55,7 +55,7 @@ class Notification {
                 RemoteViews(context.packageName, R.layout.custom_layout_notification)
             bigContentNotification.setTextViewText(R.id.timerMessage, message)
             bigContentNotification.setImageViewIcon(
-                R.id.notificationIcon,
+                androidx.core.R.id.notification_background,
                 Icon.createWithResource(context, R.drawable.ic_launcher_background)
             )
             bigContentNotification.setTextViewText(R.id.pauseCountDown, "pause")
