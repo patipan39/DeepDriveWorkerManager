@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.work.Constraints
 import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -78,6 +79,29 @@ class MainActivity : ComponentActivity() {
                         }
 
                         ShowProgressButton(data.progress)
+
+                        Button(onClick = {
+                            //chain async worker
+                            val worker1 =
+                                OneTimeWorkRequestBuilder<NotificationMessageWorker>()
+                                    .buildWithConstraint("แสดงครั้งเดียวนะ")
+                                    .build()
+
+                            val worker2 =
+                                OneTimeWorkRequestBuilder<NotificationMessageWorker>()
+                                    .buildWithConstraint("แสดงครั้งเดียวนะ")
+                                    .build()
+
+                            val worker3 = OneTimeWorkRequestBuilder<NotificationSilentWorker>()
+                                .buildWithConstraint("เริ่ม นับถอยหลัง 15 นาที")
+                                .build()
+
+                            WorkManager.getInstance(applicationContext)
+                                .beginWith(listOf(worker1))
+                                .enqueue()
+                        }) {
+                            Text(text = "Chain Parallel")
+                        }
                     }
                 }
             }
@@ -87,6 +111,13 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun ShowProgressButton(progress: Int) {
         Button(onClick = {
+            val manager = WorkManager.getInstance(applicationContext)
+            val isDone = manager.getWorkInfosByTag("ShowClock").isDone
+
+            if (!isDone) {
+                manager.getWorkInfosByTag("ShowClock").cancel(true)
+            }
+
             val worker = OneTimeWorkRequestBuilder<NotificationSilentWorker>()
                 .buildWithConstraint("อัพเดทแล้วนะ")
                 .build()

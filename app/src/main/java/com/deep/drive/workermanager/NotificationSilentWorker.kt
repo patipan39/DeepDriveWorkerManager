@@ -29,9 +29,6 @@ class NotificationSilentWorker(
             val buildProgress = Notification.createSilentNotification(context, i.toString())
             Notification.showLoadingNotification(context, buildProgress)
             delay(DELAY)
-            if (i == 99) {
-                return Result.retry()
-            }
         }
         return Result.success()
     }
